@@ -10,12 +10,68 @@ resource "aws_s3_bucket" "replicated" {
 
 resource "aws_s3_bucket_versioning" "primary" {
   bucket = aws_s3_bucket.primary.id
-  versioning_configuration { status = "Enabled" }
+  versioning_configuration {
+     status = "Enabled" 
+     }
 }
 
 resource "aws_s3_bucket_versioning" "replicated" {
   provider = aws.replica
   bucket   = aws_s3_bucket.replica.id
-  versioning_configuration { status = "Enabled" }
+  versioning_configuration {
+     status = "Enabled" 
+     }
 }
 
+resource "aws_s3_bucket_lifecycle_configuration" "lifecycle" {
+  bucket = aws_s3_bucket.primary.id
+
+  rule {
+    id     = ""
+    status = "Enabled"
+
+    transition {
+      days          = 30
+      storage_class = "STANDARD_IA"
+    }
+
+    transition {
+      days          = 90
+      storage_class = "GLACIER"
+    }
+
+    transition {
+      days          = 180
+      storage_class = "DEEP_ARCHIVE"
+    }
+
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "primary" {
+  bucket = aws_s3_bucket.primary.id
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm     = "aws:kms"
+      kms_master_key_id = var.kms_key_arn
+    }
+  }
+}
+
+resource "aws_s3_bucket_replication_configuration" "replication" {
+  bucket = aws_s3_bucket.primary.id
+  role  = var.replication_role_arn
+
+  rule {
+    status = "Enabled"
+
+    destination {
+      bucket        = aws_s3_bucket.replica.arn
+      storage_class = "STANDARD"
+
+      encryption_configuration {
+        replica_kms_key_id = var.replica_kms_key_arn
+      }
+    }
+  }
+}
