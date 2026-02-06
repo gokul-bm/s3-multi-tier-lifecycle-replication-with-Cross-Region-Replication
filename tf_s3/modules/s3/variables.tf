@@ -17,3 +17,7 @@ variable "replica_kms_key_arn" {
 variable "replication_role_arn" {
   type = string
 }
+
+variable "sns_topic_arn" {
+  type = string
+}

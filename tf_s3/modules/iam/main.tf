@@ -10,3 +10,31 @@ resource "aws_iam_role" "replication" {
     }]
   })
 }
+
+resource "aws_iam_role_policy" "replication_policy" {
+  role = aws_iam_role.replication.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = [
+          "s3:GetObjectVersion",
+          "s3:ReplicateObject",
+          "s3:ReplicateDelete",
+          "s3:ReplicateTags"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = [
+          "kms:Encrypt",
+          "kms:Decrypt"
+        ]
+        Resource = "*"
+      }
+      ]
+  })
+}
