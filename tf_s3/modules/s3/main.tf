@@ -36,7 +36,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "primary" {
 resource "aws_s3_bucket_lifecycle_configuration" "lifecycle" {
   bucket = aws_s3_bucket.primary.id
   rule {
-    id     = ""
+    id     = "multi-tier-lifecycle"
     status = "Enabled"
     transition {
       days          = 30
@@ -56,8 +56,17 @@ resource "aws_s3_bucket_lifecycle_configuration" "lifecycle" {
 resource "aws_s3_bucket_replication_configuration" "replication" {
   bucket = aws_s3_bucket.primary.id
   role  = var.replication_role_arn
+  depends_on = [
+    aws_s3_bucket_versioning.primary,
+    aws_s3_bucket_versioning.replica
+  ]
   rule {
     status = "Enabled"
+    source_selection_criteria {
+      sse_kms_encrypted_objects {
+        status = "Enabled"
+      }
+    }
     destination {
       bucket        = aws_s3_bucket.replica.arn
       storage_class = "STANDARD"
@@ -73,5 +82,16 @@ resource "aws_s3_bucket_notification" "replication_failure" {
   topic {
     topic_arn = var.sns_topic_arn
     events    = ["s3:Replication:OperationFailedReplication"]
+  }
+}
+
+resource "aws_s3_bucket_object_lock_configuration" "lock" {
+  bucket = aws_s3_bucket.primary.id
+
+  rule {
+    default_retention {
+      mode = "COMPLIANCE"
+      days = 30
+    }
   }
 }
