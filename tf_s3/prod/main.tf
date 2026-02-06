@@ -11,3 +11,8 @@ module "kms" {
     aws.replica = aws.replica
   }
 }
+
+module "iam" {
+  source      = "../../modules/iam"
+  kms_key_arn = module.kms.primary_kms_key_arn
+}

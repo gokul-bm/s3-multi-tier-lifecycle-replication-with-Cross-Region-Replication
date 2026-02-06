@@ -3,6 +3,6 @@ provider "aws" {
 }
 
 provider "aws" {
-  alias  = "replica"
+  alias  = "replicated"
   region = var.replica_region
 }
