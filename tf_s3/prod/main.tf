@@ -25,7 +25,6 @@ module "s3" {
   replica_kms_key_arn  = module.kms.replica_kms_key_arn
   replication_role_arn = module.iam.replication_role_arn
   sns_topic_arn        = module.sns.sns_topic_arn
-
   providers = {
     aws         = aws
     aws.replica = aws.replica
